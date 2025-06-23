@@ -429,9 +429,15 @@ MonoBehaviour:
   jumpForce: 8
   gravityStrength: 9.81
   planetRotator: {fileID: 579546902}
+  jetpackForce: 5
+  jetpackMaxHeight: 10
+  maxFuel: 100
+  fuelConsumptionRate: 30
+  fuelRegenerationRate: 40
   movementLimit: 3
   currentMovementDistance: 0
   isGrounded: 0
+  currentFuel: 0
 --- !u!50 &495545124
 Rigidbody2D:
   serializedVersion: 5
