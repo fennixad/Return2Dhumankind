@@ -40,7 +40,7 @@ public class PlayerMovementController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0; // Deshabilita la gravedad predeterminada de Unity, nosotros manejaremos una gravedad personalizada
+        rb.gravityScale = 0; 
         rb.freezeRotation = true; // Congela la rotación para que no gire el jugador con las colisiones
         rb.interpolation = RigidbodyInterpolation2D.Interpolate; // Suaviza el movimiento en bajas velocidades de frame
     }
@@ -149,7 +149,7 @@ public class PlayerMovementController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.AddForce(-_toCenter * jumpForce, ForceMode2D.Impulse);
-            isGrounded = false; // El jugador ya no está en el suelo después de saltar
+            isGrounded = false; 
         }
     }
 
@@ -170,11 +170,6 @@ public class PlayerMovementController : MonoBehaviour
         transform.up = -_toCenter;
     }
 
-    /// <summary>
-    /// Llamado cuando otro collider (2D) entra en el collider de este objeto.
-    /// Se usa para detectar cuándo el jugador aterriza en el "Ground".
-    /// </summary>
-    /// <param name="collision">Los datos de Collision2D asociados con esta colisión.</param>
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
@@ -183,11 +178,6 @@ public class PlayerMovementController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Llamado cuando otro collider (2D) ha salido del collider de este objeto.
-    /// Se usa para detectar cuándo el jugador deja el "Ground" (ej. después de saltar o caerse de un borde).
-    /// </summary>
-    /// <param name="collision">Los datos de Collision2D asociados con esta colisión.</param>
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
