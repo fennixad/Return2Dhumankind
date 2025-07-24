@@ -1,110 +1,108 @@
 using UnityEngine;
-
-
 public class PlayerMovementController : MonoBehaviour
 {
-[Header("Configuración del Planeta")]
+    [Header("Configuración del Planeta")]
     [Tooltip("Referencia al Transform del centro del planeta.")]
     public Transform planetCenter;
     [Tooltip("La velocidad a la que el jugador se mueve tangencialmente sobre el planeta.")]
     public float moveSpeed = 5f;
     [Tooltip("La fuerza ascendente aplicada cuando el jugador salta.")]
-    public float jumpForce = 10f;
+    public float jumpForce = 10f; // <-- Reincorporado
     [Tooltip("La intensidad de la fuerza gravitacional hacia el centro del planeta.")]
     public float gravityStrength = 9.81f;
     [Tooltip("Referencia al script PlanetRotator en el objeto del planeta.")]
     public PlanetRotator planetRotator;
 
-
-    [Header("Configuración del Jetpack")]
-    [Tooltip("La fuerza MÁXIMA de empuje del jetpack (a nivel del suelo).")]
-    public float jetpackForce = 15f;
-    [Tooltip("La altura sobre la superficie a la que el jetpack pierde toda su fuerza extra.")]
-    public float jetpackMaxHeight = 10f; // <-- NUEVO: Techo de altura para el jetpack.
-    [Tooltip("La cantidad máxima de combustible del jetpack.")]
-    public float maxFuel = 100f;
-    [Tooltip("La cantidad de combustible que se gasta por segundo.")]
-    public float fuelConsumptionRate = 30f;
-    [Tooltip("La cantidad de combustible que se regenera por segundo cuando está en el suelo.")]
-    public float fuelRegenerationRate = 40f;
-
+    // Eliminadas: Configuración del Jetpack y Fuel
 
     [Header("Límites de Movimiento")]
     [Tooltip("La máxima 'distancia' que el jugador puede moverse a izquierda o derecha a lo largo de la superficie del planeta desde su punto de inicio.")]
     public float movementLimit = 5f;
 
+    // --- NUEVAS VARIABLES PARA EL RAYCAST DE SUELO ---
+    [Header("Detección de Suelo (Raycast)")]
+    [Tooltip("La distancia desde el centro del jugador donde se lanzará el Raycast para detectar el suelo.")]
+    public float groundCheckDistance = 0.4f; // Ajusta esto según el tamaño de tu jugador y su collider.
+    [Tooltip("La capa (Layer) que se considera 'suelo'.")]
+    public LayerMask groundLayer;
 
     [Header("Estado Interno (Depuración)")]
     [SerializeField, Tooltip("Distancia de movimiento acumulada actual a lo largo de la superficie del planeta.")]
     private float currentMovementDistance = 0f;
-    [SerializeField, Tooltip("¿Está el jugador actualmente tocando un collider con la etiqueta 'Ground'?")]
+    [SerializeField, Tooltip("¿Está el jugador actualmente tocando el suelo según el Raycast?")]
     private bool isGrounded;
-    [SerializeField, Tooltip("Combustible actual del jetpack.")]
-    private float currentFuel;
-
+    // Eliminado: currentFuel
 
     // --- Referencias y Caché ---
     private Rigidbody2D rb;
     private Vector2 lastPosition;
     private Vector2 _toCenter;
     private Vector2 _tangent;
-    private float _planetRadius; // <-- NUEVO: Para calcular la altura sobre la superficie.
+    private float _planetRadius;
 
     // --- Variables para el Input ---
-    // NUEVO: Almacenamos el input para usarlo de forma segura en FixedUpdate
     private float _horizontalInput;
-    private bool _jumpButtonDown;
-    private bool _jumpButtonHeld;
-
+    private bool _jumpButtonDown; // <-- Reincorporado
+    // Eliminada: _jumpButtonHeld
+    private bool _jumpInputBuffer;
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0;
+        rb.gravityScale = 0; // Controlamos la gravedad manualmente.
         rb.freezeRotation = true;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        rb.linearVelocity = Vector2.zero; // Aseguramos que no haya velocidad inicial residual.
+        rb.angularVelocity = 0f;
     }
 
     void Start()
     {
-        isGrounded = false;
+        // isGrounded se inicializará por el Raycast en FixedUpdate
         lastPosition = transform.position;
-        currentFuel = maxFuel;
-        
-        // NUEVO: Calculamos el radio del planeta al inicio para saber la altura real.
+        // Eliminada: currentFuel = maxFuel;
+
+        // Calcula el radio inicial del planeta asumiendo que el jugador empieza en la superficie.
         _planetRadius = Vector2.Distance(transform.position, planetCenter.position);
     }
 
-    // Update se usa para leer Inputs y lógicas que no son de física.
     void Update()
     {
-        GatherInput();
+        GatherInput(); // Recoge el input aquí
         UpdateDirectionVectors();
         CalculateTangentialDistance();
-        //HandleFuel(); // La lógica de consumir/regenerar combustible es por tiempo, puede ir aquí.
+        // Eliminado: HandleFuel();
 
-        // Estas dos funciones son visuales, no aplican fuerzas, por lo que están bien en Update.
-        HandlePlanetRotation();
-        AlignPlayerOrientation();
+        HandlePlanetRotation(); // Rotación visual del planeta, puede ir en Update
+        AlignPlayerOrientation(); // Orientación visual del jugador, puede ir en Update
     }
 
-    // FixedUpdate se usa para TODAS las operaciones de física (fuerzas, velocidad).
     private void FixedUpdate()
     {
-        // CAMBIADO: Todas las funciones que usan el Rigidbody se llaman desde aquí.
+        CheckIsGrounded(); // ¡Detecta el suelo en FixedUpdate para estar sincronizado con la física!
         HandleMovement();
-        HandleJump();
-        //HandleJetpack();
-        ApplyGravity();
+        HandleJump(); // Llama a la lógica de salto en FixedUpdate
+        // Eliminado: HandleJetpack();
+        ApplyGravity(); // Aplica la gravedad en FixedUpdate
+        _jumpInputBuffer = false; // Resetea el buffer de salto después de procesar el input
     }
 
     /// <summary>
-    /// NUEVO: Centraliza toda la lectura de input en un solo lugar.
+    /// Centraliza toda la lectura de input en un solo lugar.
     /// </summary>
     private void GatherInput()
     {
+        /*
         _horizontalInput = Input.GetAxisRaw("Horizontal");
-        _jumpButtonDown = Input.GetButtonDown("Jump");
-        //_jumpButtonHeld = Input.GetButton("Jump");
+        _jumpButtonDown = Input.GetButtonDown("Jump"); // Solo capturamos el evento de pulsación
+        */
+        _horizontalInput = Input.GetAxisRaw("Horizontal");
+        // Si el botón de salto se presiona en este frame de Update,
+        // establece _jumpInputBuffer en true. Se mantendrá true hasta el FixedUpdate
+        if (Input.GetButtonDown("Jump"))
+        {
+            _jumpInputBuffer = true;
+        }
+        // Nota: NO resetees _jumpInputBuffer aquí. Se reseteará en FixedUpdate.
     }
 
     private void UpdateDirectionVectors()
@@ -120,17 +118,17 @@ public class PlayerMovementController : MonoBehaviour
         currentMovementDistance += tangentialMovement;
         lastPosition = transform.position;
     }
-    
-    // CAMBIADO: Ya no necesita recibir el input como parámetro.
+
     private void HandlePlanetRotation()
     {
-        planetRotator.RotateWithPlayer(_horizontalInput);
+        if (planetRotator != null) // Añadir comprobación de nulidad para seguridad
+        {
+            planetRotator.RotateWithPlayer(_horizontalInput);
+        }
     }
 
-    // CAMBIADO: Esta función ahora se llama HandleMovement y usa el input cacheado.
     private void HandleMovement()
     {
-        // Limitamos el movimiento
         float limitedInput = _horizontalInput;
         if (_horizontalInput > 0 && currentMovementDistance >= movementLimit)
         {
@@ -141,100 +139,73 @@ public class PlayerMovementController : MonoBehaviour
             limitedInput = 0;
         }
 
-        // Aplicamos la velocidad
         Vector2 desiredTangentialVelocity = _tangent * limitedInput * moveSpeed;
-        float radialVelocity = Vector2.Dot(rb.linearVelocity, _toCenter);
-        rb.linearVelocity = desiredTangentialVelocity + radialVelocity * _toCenter;
+        float radialVelocity = Vector2.Dot(rb.linearVelocity, _toCenter); // Velocidad radial actual
+        rb.linearVelocity = desiredTangentialVelocity + radialVelocity * _toCenter; // Mantiene la velocidad radial existente
     }
-    
-    // CAMBIADO: Usa la variable de input cacheada.
+
+    /// <summary>
+    /// Maneja la lógica de salto del jugador.
+    /// </summary>
     private void HandleJump()
     {
-        if (_jumpButtonDown && isGrounded)
+        // Solo permite saltar si el botón de salto fue presionado y el jugador está en el suelo.
+        if (_jumpInputBuffer && isGrounded)
         {
+            // Aplica una fuerza instantánea opuesta a la gravedad (hacia "arriba" del planeta).
+            // ForceMode2D.Impulse es ideal para saltos, ya que aplica una fuerza al instante.
             rb.AddForce(-_toCenter * jumpForce, ForceMode2D.Impulse);
+            // Si quieres un "salto con fricción cero" mientras sube, puedes añadir un chequeo
+            // isGrounded = false; (aunque CheckIsGrounded lo hará en el siguiente FixedUpdate)
         }
     }
 
-    // CAMBIADO: La lógica del jetpack ahora está separada de la del combustible.
-    private void HandleJetpack()
-    {
-        if (_jumpButtonHeld && !isGrounded && currentFuel > 0)
-        {
-            // --- NUEVO: Lógica de reducción de fuerza con la altura ---
-            
-            // 1. Calcular la altura actual sobre la superficie.
-            float distanceToCenter = Vector2.Distance(transform.position, planetCenter.position);
-            float currentAltitude = distanceToCenter - _planetRadius;
+    // Eliminado: private void HandleJetpack() { ... }
 
-            // 2. Calcular qué porcentaje de la altura máxima hemos alcanzado (de 0.0 a 1.0).
-            float heightFactor = Mathf.Clamp01(currentAltitude / jetpackMaxHeight);
+    // Eliminado: private void HandleFuel() { ... }
 
-            // 3. Interpolar la fuerza. A altura 0, la fuerza es 'jetpackForce'. A altura máxima, la fuerza es 0.
-            float dynamicJetpackForce = Mathf.Lerp(jetpackForce, 0f, heightFactor);
-
-            // 4. Aplicar la fuerza dinámica calculada.
-            rb.AddForce(-_toCenter * dynamicJetpackForce, ForceMode2D.Force);
-        }
-    }
-    
-    // NUEVO: La lógica del combustible ahora está separada para mayor claridad.
-    private void HandleFuel()
-    {
-        // Consumir combustible si se usa el jetpack
-        if (_jumpButtonHeld && !isGrounded && currentFuel > 0)
-        {
-            currentFuel -= fuelConsumptionRate * Time.deltaTime;
-        }
-        // Regenerar combustible en el suelo
-        else if (isGrounded && currentFuel < maxFuel)
-        {
-            currentFuel += fuelRegenerationRate * Time.deltaTime;
-        }
-
-        // Asegurarse de que el combustible nunca se pase de los límites
-        currentFuel = Mathf.Clamp(currentFuel, 0f, maxFuel);
-    }
-    
     private void ApplyGravity()
     {
-        // Para que el jetpack no anule completamente la gravedad, nos aseguramos de aplicarla siempre.
+        // La gravedad solo se aplica si el jugador NO está en el suelo.
+        // Si está en el suelo, el Raycast detectará el contacto.
+        
         if (!isGrounded)
         {
-            rb.AddForce(_toCenter * gravityStrength);
+            // Aplica una fuerza continua hacia el centro del planeta.
+            // ForceMode2D.Force es para fuerzas continuas, como la gravedad.
+            // Dibuja un rayo azul desde el jugador hacia donde se aplica la gravedad.
+            // Debería apuntar consistentemente hacia el centro del planeta.
+            Debug.DrawRay(transform.position, _toCenter * 0.2f, Color.blue);
+            rb.AddForce(_toCenter * gravityStrength, ForceMode2D.Force);
         }
     }
 
     private void AlignPlayerOrientation()
     {
+        // Asegura que el "arriba" del jugador siempre apunte lejos del centro del planeta.
         transform.up = -_toCenter;
     }
 
-    // --- Detección de Colisiones ---
-    private void OnCollisionEnter2D(Collision2D collision)
+    /// <summary>
+    /// Comprueba si el jugador está en el suelo usando un Raycast2D.
+    /// Lanza un rayo hacia el centro del planeta desde el jugador.
+    /// </summary>
+    private void CheckIsGrounded()
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-        }
-    }
-    
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        // Añadido por seguridad, para asegurar que isGrounded sea true si estamos en contacto continuo.
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = true;
-        }
-    }
+        // Origen del rayo: la posición del jugador.
+        Vector2 rayOrigin = transform.position;
 
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = false;
-        }
+        // Dirección del rayo: hacia el centro del planeta.
+        // _toCenter ya está normalizado y apunta del jugador al centro.
+        Vector2 rayDirection = _toCenter;
+
+        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, groundCheckDistance, groundLayer);
+
+        // Se dibuja verde si golpea el suelo, rojo si no.
+        //Debug.DrawRay(rayOrigin, rayDirection * groundCheckDistance, hit.collider != null ? Color.green : Color.red);
+
+        // Actualiza la variable isGrounded.
+        isGrounded = hit.collider != null;
     }
+    // Eliminados: Los métodos OnCollisionEnter2D, OnCollisionStay2D, OnCollisionExit2D
 }
-
-

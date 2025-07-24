@@ -426,18 +426,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   planetCenter: {fileID: 579546899}
   moveSpeed: 1
-  jumpForce: 8
+  jumpForce: 10
   gravityStrength: 9.81
   planetRotator: {fileID: 579546902}
-  jetpackForce: 5
-  jetpackMaxHeight: 10
-  maxFuel: 100
-  fuelConsumptionRate: 30
-  fuelRegenerationRate: 40
   movementLimit: 3
+  groundCheckDistance: 0.4
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 64
   currentMovementDistance: 0
   isGrounded: 0
-  currentFuel: 0
 --- !u!50 &495545124
 Rigidbody2D:
   serializedVersion: 5
@@ -569,7 +567,7 @@ GameObject:
   - component: {fileID: 579546900}
   - component: {fileID: 579546901}
   - component: {fileID: 579546902}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Planet
   m_TagString: Ground
   m_Icon: {fileID: 0}
