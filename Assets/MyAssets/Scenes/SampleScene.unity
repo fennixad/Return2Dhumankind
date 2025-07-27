@@ -425,17 +425,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planetCenter: {fileID: 579546899}
-  moveSpeed: 1
-  jumpForce: 10
-  gravityStrength: 9.81
   planetRotator: {fileID: 579546902}
+  moveSpeed: 1
   movementLimit: 3
+  jumpForce: 5
+  gravityStrength: 9.81
+  jetpackForce: 15
+  maxJetpackSpeed: 5
+  jetpackBoostMultiplier: 25
+  minFallSpeedForBoost: 7
+  maxHeight: 35
   groundCheckDistance: 0.4
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  currentMovementDistance: 0
-  isGrounded: 0
 --- !u!50 &495545124
 Rigidbody2D:
   serializedVersion: 5
