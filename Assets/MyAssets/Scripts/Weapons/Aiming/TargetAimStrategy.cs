@@ -1,17 +1,21 @@
 using UnityEngine;
 
-/// <summary>
-/// Estrategia de apuntado hacia un objetivo fijo (ej: enemigo que dispara al player).
-/// </summary>
-public class EnemyAim : MonoBehaviour, IAimStrategy
+namespace MyAssets.Scripts.Weapons.Aiming
 {
-    [SerializeField] private Transform target;
-
-    public Vector2 GetDirection(Transform shooter, Transform targetOverride = null)
+    /// <summary>
+    /// Estrategia de apuntado hacia un objetivo fijo.
+    /// Ejemplo: torretas o enemigos que disparan al jugador.
+    /// </summary>
+    public class TargetAimStrategy : MonoBehaviour, IAimStrategy
     {
-        Transform effectiveTarget = targetOverride ?? target;
-        if (effectiveTarget == null) return Vector2.right;
+        [SerializeField] private Transform target;
 
-        return (effectiveTarget.position - shooter.position).normalized;
+        public Vector2 GetDirection(Transform shooter, Transform targetOverride = null)
+        {
+            Transform effectiveTarget = targetOverride ?? target;
+            if (effectiveTarget == null) return Vector2.right;
+
+            return (effectiveTarget.position - shooter.position).normalized;
+        }
     }
 }

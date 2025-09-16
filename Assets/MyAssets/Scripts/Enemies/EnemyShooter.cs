@@ -1,27 +1,32 @@
+using MyAssets.Scripts.Weapons;
+using MyAssets.Scripts.Weapons.Aiming;
 using UnityEngine;
 
-/// <summary>
-/// Controlador de disparo de enemigos.
-/// </summary>
-public class EnemyShooter : MonoBehaviour
+namespace MyAssets.Scripts.Enemies
 {
-    [SerializeField] private WeaponController weapon;
-    [SerializeField] private Transform target; // El jugador
-
-    private IAimStrategy aimStrategy;
-
-    private void Awake()
+    /// <summary>
+    /// Controlador de disparo de enemigos.
+    /// </summary>
+    public class EnemyShooter : MonoBehaviour
     {
-        // En este caso asignamos TargetAim
-        aimStrategy = GetComponent<IAimStrategy>();
-        if (aimStrategy == null)
-            Debug.LogError("Falta una estrategia de apuntado (ej: TargetAim)");
-    }
+        [SerializeField] private WeaponController weapon;
+        [SerializeField] private Transform target; // El jugador
 
-    private void Update()
-    {
-        // Ejemplo: disparo autom·tico
-        Vector2 dir = aimStrategy.GetDirection(weapon.transform, target);
-        weapon.Shoot(dir);
+        private IAimStrategy aimStrategy;
+
+        private void Awake()
+        {
+            // En este caso asignamos TargetAim
+            aimStrategy = GetComponent<IAimStrategy>();
+            if (aimStrategy == null)
+                Debug.LogError("Falta una estrategia de apuntado (ej: TargetAim)");
+        }
+
+        private void Update()
+        {
+            // Ejemplo: disparo autom√°tico
+            Vector2 direction = aimStrategy.GetDirection(weapon.transform, target);
+            weapon.TryShoot(direction);
+        }
     }
 }

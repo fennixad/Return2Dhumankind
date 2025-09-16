@@ -1,38 +1,47 @@
 using UnityEngine;
 
-public class Aim2D : MonoBehaviour
+namespace MyAssets.Scripts.Player
 {
-    public Transform player;
-
-    public Transform originBullet;
-
-    SpriteRenderer spriteRenderer;
-
-    private void Awake()
+    public class Aim2D : MonoBehaviour
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
-    }
+        public Transform player;
 
-    void Update()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        Debug.DrawRay(ray.origin, ray.direction * 10f, Color.red);
+        public Transform originBullet;
 
-        Vector3 a = transform.position;
-        Vector3 b = ray.origin + ray.direction * 10f;
+        SpriteRenderer spriteRenderer;
+        
+        // Variable pública para almacenar la última dirección calculada
+        public Vector2 ShootDirection { get; private set; }
 
-        Debug.DrawLine(a, b);
+        private void Awake()
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
 
-        Vector3 dir = b - a;
-        dir.z = 0f;
-        dir.Normalize();
+        void Update()
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Debug.DrawRay(ray.origin, ray.direction * 10f, Color.red);
 
-        float _angulos = Vector3.SignedAngle(Vector3.right, dir, Vector3.forward);
-        transform.rotation = Quaternion.Euler(Vector3.forward * _angulos);
+            Vector3 a = transform.position;
+            Vector3 b = ray.origin + ray.direction * 10f;
 
-        Debug.DrawRay(originBullet.position, b - originBullet.position, Color.yellow);
+            Debug.DrawLine(a, b);
 
-        bool _flipY = player.position.x > b.x;
-        spriteRenderer.flipY = _flipY;
+            Vector3 dir = b - a;
+            dir.z = 0f;
+            dir.Normalize();
+            
+            // Guardar la dirección de disparo
+            ShootDirection = dir;
+
+            float _angulos = Vector3.SignedAngle(Vector3.right, dir, Vector3.forward);
+            transform.rotation = Quaternion.Euler(Vector3.forward * _angulos);
+
+            Debug.DrawRay(originBullet.position, b - originBullet.position, Color.yellow);
+
+            bool _flipY = player.position.x > b.x;
+            spriteRenderer.flipY = _flipY;
+        }
     }
 }

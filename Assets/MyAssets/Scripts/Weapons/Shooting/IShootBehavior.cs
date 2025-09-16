@@ -1,9 +1,12 @@
 using UnityEngine;
 
-/// <summary>
-/// Estrategia de disparo (una bala, r·faga, escopeta, etc).
-/// </summary>
-public interface IShootBehavior
+namespace MyAssets.Scripts.Weapons.Shooting
 {
-    void Shoot(WeaponData data, Transform origin, Vector2 direction);
+    /// <summary>
+    /// Estrategia de disparo (una bala, r√°faga, escopeta, etc).
+    /// </summary>
+    public interface IShootBehavior
+    {
+        void Shoot(WeaponData data, Transform origin, Vector2 direction);
+    }
 }

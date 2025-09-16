@@ -1,28 +1,40 @@
 using System.Collections;
+using MyAssets.Scripts.Bullets;
 using Unity.VisualScripting;
 using UnityEngine;
 
-/// <summary>
-/// Dispara ráfagas de balas con un pequeño delay entre ellas.
-/// </summary>
-[CreateAssetMenu(menuName = "Weapons/Shoot Behaviors/Burst Shot")]
-public class BurstShot : ScriptableShootBehavior
+namespace MyAssets.Scripts.Weapons.Shooting
 {
-    [SerializeField] private int burstCount = 3;
-    [SerializeField] private float burstDelay = 0.1f;
-
-    public override void Shoot(WeaponData data, Transform origin, Vector2 direction)
+    /// <summary>
+    /// Dispara rï¿½fagas de balas con un pequeï¿½o delay entre ellas.
+    /// </summary>
+    [CreateAssetMenu(menuName = "Weapons/Shooting/Burst Shot")]
+    public class BurstShot : ScriptableShootBehavior
     {
-        CoroutineRunner.instance.StartCoroutine(BurstRoutine(data, origin, direction));
-    }
+        [Header("Burst Settings")]
+        [SerializeField] private int burstCount = 3;
 
-    private IEnumerator BurstRoutine(WeaponData data, Transform origin, Vector2 direction)
-    {
-        for (int i = 0; i < burstCount; i++)
+        [SerializeField] private float burstDelay = 0.1f;
+
+        public override void Shoot(WeaponData data, Transform origin, Vector2 direction)
         {
-            BulletController bullet = Instantiate(data.bulletPrefab, origin.position, Quaternion.identity);
-            bullet.Initialize(data.bulletData, direction);
-            yield return new WaitForSeconds(burstDelay);
+            CoroutineRunner.instance.StartCoroutine(BurstRoutine(data, origin, direction));
+        }
+
+        private IEnumerator BurstRoutine(WeaponData data, Transform origin, Vector2 direction)
+        {
+            for (int i = 0; i < burstCount; i++)
+            {
+                BulletController bullet = Instantiate(
+                    data.bulletPrefab,
+                    origin.position,
+                    Quaternion.LookRotation(Vector3.forward, direction) // ðŸ”‘
+                );
+
+                bullet.Initialize(data.bulletData, direction);
+
+                yield return new WaitForSeconds(burstDelay);
+            }
         }
     }
 }

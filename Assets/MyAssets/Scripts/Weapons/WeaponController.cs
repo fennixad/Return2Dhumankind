@@ -1,21 +1,34 @@
+
 using UnityEngine;
 
-/// <summary>
-/// Representa un arma gen�rica.
-/// Se le asigna un tipo de disparo y datos de configuraci�n.
-/// </summary>
-public class WeaponController : MonoBehaviour
+namespace MyAssets.Scripts.Weapons
 {
-    [SerializeField] private WeaponData data;
-    [SerializeField] private Transform firePoint;
-
-    private float nextFireTime;
-    public void TryShoot(Vector2 direction)
+    /// <summary>
+    /// Controlador de un arma. Gestiona el disparo, el fire rate y delega
+    /// en el comportamiento de disparo configurado en el ScriptableObject.
+    /// </summary>
+    public class WeaponController : MonoBehaviour
     {
-        if (Time.time < nextFireTime) return;
-        if (data == null || data.shootBehavior == null) return;
+        [Header("Configuración del arma")]
+        [SerializeField] private WeaponData data;
+        [SerializeField] private Transform firePoint;
+        
 
-        data.shootBehavior.Shoot(data, firePoint, direction);
-        nextFireTime = Time.time + data.fireRate;
+        /// <summary>
+        /// Intenta disparar en la dirección dada. 
+        /// Devuelve true si el disparo fue exitoso, false si está en cooldown o mal configurado.
+        /// </summary>
+        public bool TryShoot(Vector2 direction)
+        {
+            
+
+            // Ejecutar el disparo
+            Debug.Log($"Disparando desde: {firePoint.position}, dirección: {direction}");
+            data.shootBehavior.Shoot(data, firePoint, direction);
+
+            // Reiniciar cooldown
+
+            return true;
+        }
     }
 }

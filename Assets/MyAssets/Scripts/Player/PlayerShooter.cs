@@ -1,20 +1,43 @@
+using MyAssets.Scripts.Weapons;
 using UnityEngine;
 
-/// <summary>
-/// Controlador de disparo del jugador.
-/// </summary>
-public class PlayerShooter : MonoBehaviour
+namespace MyAssets.Scripts.Player
 {
-    [SerializeField] private WeaponController weapon;
-    [SerializeField] private MouseAim aim; // referencia a la estrategia de apuntado
-
-    private void Update()
+    /// <summary>
+    /// Controlador de disparo del jugador.
+    /// Usa un arma (WeaponController) y una estrategia de apuntado.
+    /// </summary>
+    public class PlayerShooter : MonoBehaviour
     {
-        Vector2 direction = aim.GetDirection(weapon.transform);
+        [Header("Referencias")]
+        [SerializeField] private WeaponController weapon;
+        [SerializeField] private Aim2D aimer; // O Aim2D, según lo que uses
 
-        if (Input.GetButton("Fire1"))
+        private void Awake()
         {
-            weapon.TryShoot(direction);
+            if (weapon == null)
+                Debug.LogWarning("WeaponController no asignado en PlayerShooter", this);
+
+            if (aimer == null)
+                Debug.LogWarning("Aimer no asignado en PlayerShooter", this);
+        }
+
+        private void Update()
+        {
+            if (weapon == null) return;
+            // La dirección debe venir del firePoint, que es el que se rota
+            Vector2 direction = weapon.transform.right;
+
+            if (Input.GetButton("Fire1"))
+            {
+                bool shot = weapon.TryShoot(direction);
+
+                if (shot)
+                    Debug.Log("💥 Disparo exitoso");
+                else
+                    Debug.Log("🔒 No se pudo disparar (cooldown o configuración)");
+            }
         }
     }
 }
+
